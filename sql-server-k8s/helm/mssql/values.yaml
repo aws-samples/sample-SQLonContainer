@@ -1,0 +1,88 @@
+# SQL Server Configuration
+mssql:
+  image: mcr.microsoft.com/mssql/server
+  tag: "2022-latest"
+  pid: "Enterprise"           # Developer, Express, Standard, Enterprise
+  agentEnabled: true
+  memoryLimitMB: 3072
+
+# AWS Configuration
+aws:
+  region: us-east-1
+  accountId: "123456789012"
+  # Name of a PRE-EXISTING secret in AWS Secrets Manager (create it manually before
+  # deploying — see README Step 4). This chart only references the secret; it never
+  # creates it. Expected JSON payload: {"username":"sa","password":"..."}
+  secretName: mssql/sa-password
+  irsaRoleArn: arn:aws:iam::123456789012:role/mssql-secrets-role
+
+# Service Account
+serviceAccount:
+  create: false   # Set to false when using eksctl create iamserviceaccount
+  name: mssql-sa
+
+# Service (NLB for external access)
+service:
+  scheme: internal              # "internal" for VPC-only, "internet-facing" for public
+  subnetIds: ""                 # Optional: comma-separated subnet IDs for NLB placement
+
+# Resources
+resources:
+  requests:
+    cpu: "4"
+    memory: "4Gi"
+  limits:
+    cpu: "4"
+    memory: "12Gi"
+
+# Storage
+storage:
+  create: true              # Set to false if StorageClass already exists
+  className: mssql-storage
+  provisioner: ebs.csi.aws.com
+  type: gp3
+  iops: "3000"
+  throughput: "125"
+  encrypted: "true"
+  data:
+    size: 50Gi
+  log:
+    size: 20Gi
+  backup:
+    size: 50Gi
+
+# Network Policy
+networkPolicy:
+  enabled: true
+  # CIDR ranges allowed to reach the SQL Server port (1433) for NLB health checks.
+  # Scope this to your NLB subnet CIDRs or the VPC CIDR block. Do NOT use 0.0.0.0/0.
+  # HINT: Update the value below to match your own VPC CIDR (e.g. the CIDR block
+  # of the VPC where your EKS cluster and NLB run). The 10.0.0.0/16 below is only
+  # an example placeholder.
+  healthCheckCidrs:
+    - 10.0.0.0/16
+
+# Pod Disruption Budget
+pdb:
+  enabled: true
+  minAvailable: 1
+
+# Node placement
+nodeSelector:
+  kubernetes.io/os: linux
+
+tolerations:
+  - key: "database"
+    operator: "Equal"
+    value: "mssql"
+    effect: "NoSchedule"
+
+# SQL Server mssql.conf settings
+config:
+  tlsProtocols: "1.2"
+  forceEncryption: 1
+  telemetry: false
+  traceFlags:
+    - 3226    # Suppress backup log entries
+    - 1222    # Deadlock detection
+    - 8002    # Soft CPU affinity for cgroup v2 CPU limit reporting

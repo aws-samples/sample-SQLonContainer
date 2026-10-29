@@ -1,0 +1,12 @@
+apiVersion: v2
+name: mssql
+description: SQL Server 2022 on Kubernetes with AWS Secrets Manager integration
+type: application
+version: 1.0.0
+appVersion: "2022"
+keywords:
+  - mssql
+  - sql-server
+  - database
+maintainers:
+  - name: DevOps Team

@@ -1,0 +1,13 @@
+SQL Server 2022 has been deployed!
+
+To connect from within the cluster:
+  sqlcmd -S {{ include "mssql.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local,1433 -U sa
+
+To port-forward for local access:
+  kubectl port-forward svc/{{ include "mssql.fullname" . }} 1433:1433 -n {{ .Release.Namespace }}
+  sqlcmd -S localhost,1433 -U sa
+
+To allow an app namespace to connect (NetworkPolicy):
+  kubectl label namespace <app-namespace> access-mssql=true
+
+SA password is stored in AWS Secrets Manager: {{ .Values.aws.secretName }}

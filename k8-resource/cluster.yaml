@@ -1,0 +1,11 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: eksclusql
+  region: us-east-1
+
+managedNodeGroups:
+  - name: eksclusql
+    instanceTypes: ["r7i.4xlarge", "r6i.4xlarge"]
+    desiredCapacity: 2

@@ -1,0 +1,45 @@
+---
+# Headless service (required for StatefulSet)
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "mssql.fullname" . }}-headless
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "mssql.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    {{- include "mssql.selectorLabels" . | nindent 4 }}
+  ports:
+  - protocol: TCP
+    port: 1433
+    targetPort: 1433
+    name: mssql
+---
+# NLB service for external access (DMS, other VPCs, outside K8s)
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "mssql.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "mssql.labels" . | nindent 4 }}
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "external"
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: {{ .Values.service.scheme | quote }}
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+    {{- if .Values.service.subnetIds }}
+    service.beta.kubernetes.io/aws-load-balancer-subnets: {{ .Values.service.subnetIds | quote }}
+    {{- end }}
+spec:
+  type: LoadBalancer
+  selector:
+    {{- include "mssql.selectorLabels" . | nindent 4 }}
+  ports:
+  - protocol: TCP
+    port: 1433
+    targetPort: 1433
+    name: mssql

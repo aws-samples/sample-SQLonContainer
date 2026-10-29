@@ -1,0 +1,17 @@
+{{- if .Values.storage.create }}
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ .Values.storage.className }}
+  labels:
+    {{- include "mssql.labels" . | nindent 4 }}
+provisioner: {{ .Values.storage.provisioner }}
+parameters:
+  type: {{ .Values.storage.type }}
+  iops: {{ .Values.storage.iops | quote }}
+  throughput: {{ .Values.storage.throughput | quote }}
+  encrypted: {{ .Values.storage.encrypted | quote }}
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+{{- end }}
